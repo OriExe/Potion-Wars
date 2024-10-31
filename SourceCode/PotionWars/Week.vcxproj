@@ -131,7 +131,10 @@
     <ClCompile Include="FileName.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Character.h" />
+    <ClInclude Include="Position.h" />
     <ClInclude Include="Potion.h" />
+    <ClInclude Include="Unit.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,16 +1,19 @@
 #include <string>
 #include <iostream>
 #include <list>
+#include <vector>
+#include "Position.h"
 #pragma once
 using std::string;
 using std::list;
 using std::vector;
-class ingredient
+class ingredient : public position
 {
 private:
 	string name = "";
 	char symbolInGame = 'Z';
-	static vector<ingredient> ingredientsInGame;
+	static vector<ingredient*> ingredientsInGame;
+	int countInPlayer = 0;
 public:
 	ingredient(string n = "placeHolder", char c = 'P')
 	{
@@ -18,7 +21,7 @@ public:
 		{
 			name = n;
 			symbolInGame = c;
-			ingredientsInGame.push_back(*this);
+			ingredientsInGame.push_back(this);
 		}
 
 	}
@@ -30,14 +33,23 @@ public:
 	{
 		return symbolInGame;
 	}
+	int getCount()
+	{
+		return countInPlayer;
+	}
+	void setCount(int amount)
+	{
+		countInPlayer += amount;
+	}
+
 	/// <summary>
 	/// Outputs a random ingredient
 	/// </summary>
-	static ingredient outPutRandomIngredient(std::default_random_engine randomNumberGenerator)
+	static ingredient* outPutRandomIngredient(std::default_random_engine randomNumberGenerator)
 	{
 		std::uniform_int_distribution<int> Randomint(0, ingredientsInGame.size()-1);
 		int RandomIntResult = Randomint(randomNumberGenerator);
-		return ingredientsInGame[RandomIntResult];
+		return ingredientsInGame.at(RandomIntResult);
 	}
 };
 

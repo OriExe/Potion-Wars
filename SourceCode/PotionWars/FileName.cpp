@@ -3,8 +3,12 @@
 #include <string>
 #include<list>
 #include <random>
+#include <vector>
 #include "Potion.h" //Includes class for all potions
 #include "conio.h" //Allows keyboard inputs
+#include "Unit.h" //Stores information on what is on the boar
+#include "Character.h"
+#include "Position.h"
 #define HEIGHT  6
 #define WIDTH 8
 
@@ -17,78 +21,32 @@ using std::vector;
 #pragma region Function Definations
 void printState(int xPosition, int yPosition);
 int generateRandomNumber();
-
+vector<ingredient*> ingredient::ingredientsInGame;
+#pragma region Instructions array
+string Help[9] =
+{
+	"Key:",
+	"B:Brain",
+	"A:Apple Juice",
+	"W:Wood",
+	"M:Magma",
+	"P:Paper",
+	"&:Enemy",
+	"@:You",
+	"Thanks for playing!"
+};
 #pragma endregion
-class position
-{
-protected:
-	int x = 6;
-	int y = 3;
-};
+#pragma endregion
+
 std::default_random_engine engine;
-class character : private position
-{
-private:
-	string name;
-	int level;
-	bool isEnemy; //Returns false if Player
-	char icon = '@';
-	static std::vector<character>AliveEnemies;
-public:
-	character(string n, bool isCharPlayer)
-	{
-		name = n;
-		isEnemy = isCharPlayer;
-		if (isEnemy)
-		{
-			icon = '&';
-			AliveEnemies.push_back(*this);
-		}
-		else if (!isEnemy)
-		{
-			icon = '@';
-		}
-	}
-	string getName()
-	{
-		return name;
-	}
-	int getPosX()
-	{
-		return x;
-	}
-	int getPosY()
-	{
-		return y;
-	}
-	static int getCountOfEnemy()
-	{
-		return AliveEnemies.size();
-	}
+//Vector Defination (Declaration)
+vector<character>* character::AliveEnemies;
 
-	char getSymbol()
-	{
-		return icon;
-	}
-	void setPosX(int n)
-	{
-		if (x + n >= 0 && x+n < WIDTH)
-		{
-			x += n;
-		}
-	}
-	void setPosY(int n)
-	{
-		if (y+n >= 0 && y+n < HEIGHT)
-		{
-			y += n;
-		}
-	}
-
-
-};
-
-
+/// <summary>
+/// Stores positions for where things are located across the board
+/// </summary>
+vector<vector<Unit*>> UnitLocations(HEIGHT,vector<Unit*>(WIDTH,nullptr));
+bool playerIsDead;
 int main()
 {
 	generateRandomNumber();
@@ -119,8 +77,11 @@ int main()
 	cout << "Name your player" << endl;
 	string playerName;
 	std::cin >> playerName;
-	character* player = new character(playerName, true);
+	character* player = new character(playerName, false);
+	player->setPosX(+6);
+	player->setPosY(+3);
 	
+	///Main loop
 	do
 	{
 		printState(player->getPosX(), player->getPosY());
@@ -150,8 +111,8 @@ int main()
 		}
 		printf("\033[2J\033[1;1H"); //Clears the terminals (Sort of) Reference:https://stackoverflow.com/a/1348624 
 		cout << endl;
-	} while (true);// No end point rn
-	
+	} while (!playerIsDead);// No end point rn
+	cout << "You have died";
 	
 	return 0;
 }
@@ -164,9 +125,26 @@ void printState(int xPosition, int yPosition)
 	{
 		for (int n = 0; n < WIDTH;  n++) 
 		{
+			
 			if (n == xPosition && i == yPosition) //Places down Player coordinates
 			{
 				cout << '@';
+				//Is the player standing on top of an enemy or ingredient
+				if (UnitLocations[i][n] != nullptr)
+				{
+					playerIsDead = UnitLocations[i][n]->getUnit();
+
+					///As the unit class is deleted this will be null
+					UnitLocations[i][n] = nullptr;
+				}
+			}
+			else if (UnitLocations[i][n] != nullptr)
+			{
+				char symbolInSpace = UnitLocations[i][n]->GetSymbolInLocation();
+				if (symbolInSpace != ' ')
+				{
+					cout << symbolInSpace;
+				}
 			}
 			else
 			{
@@ -179,25 +157,33 @@ void printState(int xPosition, int yPosition)
 					case 1: 
 						//Spawns ingredient
 						{
-							ingredient* a = new ingredient();
-							cout << a->outPutRandomIngredient(engine).getSymbol();
-							delete a;
+							ingredient* newIngredient = ingredient::outPutRandomIngredient(engine);
+							
+							Unit* newIngredientUnit = new Unit(newIngredient);
+							UnitLocations[i][n] = newIngredientUnit;
+							cout << newIngredient->getSymbol();
 						}
 						break;
 					case 2:
 						{
-							character* newEnemy = new character("Enemy", false);
+							character* newEnemy = new character("Enemy", true);
+							Unit* newEnemyUnit = new Unit(newEnemy); //This doesn't seem to work with nullptr being present
+							UnitLocations[i][n] = newEnemyUnit;
 							cout << newEnemy->getSymbol();
 						}
 						break;
-
 					default:
 						cout << "Invalid answer" << endl;
 						break;
 				}
 			}
+		
 		}
-		cout << endl;
+		cout << "	" << Help[i] << endl;
+	}
+	for (int i = HEIGHT; i < sizeof(Help) / 40 ; i++)
+	{
+		cout << "		" << Help[i] << endl;
 	}
 }
 
@@ -214,17 +200,17 @@ int generateRandomNumber()
 	std::uniform_int_distribution<int> Randomint(0, 100);
 	int RandomIntResult = Randomint(engine);
 
-	if (RandomIntResult < 10) // 10% chance
+	if (RandomIntResult < 2) // 2% chance
 	{
 		return 2; //Enemy
 	}
-	else if (RandomIntResult < 30) //20 Percent chance
+	else if (RandomIntResult < 8) //6% chance
 	{
 		return 1;
 	}
 	else
 	{
-		return 0; //70 Percent chance
+		return 0; //92% chance
 	}
 	
 	
