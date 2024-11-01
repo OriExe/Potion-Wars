@@ -19,18 +19,32 @@ public:
 	{
 		enemyPosition = E;
 	}
+	/// <summary>
+	/// Returns the unit that is stored in that space
+	/// SHOULD ONLY BE CALLED ONCE PER LOOP
+	/// </summary>
+	/// <returns>The symbol of the object in that space or a blank space</returns>
 	char GetSymbolInLocation()
 	{
+		//If Ingrdient
 		if (ingredientPosition != nullptr)
 		{
-			return ingredientPosition->getSymbol();
+			return ingredientPosition->getSymbol(); // <- Sends Ingredient
 		}
+		//If Enemy
 		else if (enemyPosition != nullptr)
 		{
-			return enemyPosition->getSymbol();
+			if (!enemyPosition->getIsMoved()) //< - Checks if enemy has moved 
+			{
+				enemyPosition->enemyMovement();
+				return '.';
+			}
+			else
+			{
+				return enemyPosition->getSymbol();
+			}
 			//Tells the enemy to move position through a function
 			//Actually I need to do this differently
-			
 		}
 		else
 		{
@@ -39,7 +53,7 @@ public:
 	}
 
 	/// <summary>
-	/// Will return true if player dies
+	/// Calls when the player is standing over an enemy or ingredient and decides the action that'll be taken
 	/// </summary>
 	/// <returns>Return true to confirm death of player</returns>
 	bool getUnit()

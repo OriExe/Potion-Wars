@@ -9,6 +9,7 @@
 #include "Unit.h" //Stores information on what is on the boar
 #include "Character.h"
 #include "Position.h"
+#include "Random.h"
 #define HEIGHT  6
 #define WIDTH 8
 
@@ -22,6 +23,7 @@ using std::vector;
 void printState(int xPosition, int yPosition);
 int generateRandomNumber();
 vector<ingredient*> ingredient::ingredientsInGame;
+std::default_random_engine Random::engine;
 #pragma region Instructions array
 string Help[9] =
 {
@@ -38,7 +40,6 @@ string Help[9] =
 #pragma endregion
 #pragma endregion
 
-std::default_random_engine engine;
 //Vector Defination (Declaration)
 vector<character>* character::AliveEnemies;
 
@@ -85,29 +86,35 @@ int main()
 	do
 	{
 		printState(player->getPosX(), player->getPosY());
-		int Buttonpress;
-		Buttonpress = _getch(); //A built in function to detect the button presses on a keyboard
-		Buttonpress = toupper(Buttonpress);
-
-		//Finds what button was pressed
-		switch (Buttonpress)
+		//
+		bool inputValid = false;
+		while (!inputValid)
 		{
-		case 'W':
-			player->setPosY(-1);
-			break;
-		case 'A':
-			player->setPosX(-1);
-			break;
-		case 'S':
-			player->setPosY(+1);
-			break;
-		case 'D':
-			player->setPosX(+1);
-			break;
+			int Buttonpress;
+			Buttonpress = _getch(); //A built in function to detect the button presses on a keyboard
+			Buttonpress = toupper(Buttonpress);
 
-		default:
-			cout << "Invalid Input" << endl;
-			break;
+			//Finds what button was pressed
+			switch (Buttonpress)
+			{
+			case 'W':
+			inputValid = player->setPosY(-1);
+				break;
+			case 'A':
+			inputValid = player->setPosX(-1);
+				break;
+			case 'S':
+			inputValid = player->setPosY(+1);
+				break;
+			case 'D':
+			inputValid = player->setPosX(+1);
+				break;
+
+			default:
+				cout << "Invalid Input" << endl;
+				break;
+			}
+
 		}
 		printf("\033[2J\033[1;1H"); //Clears the terminals (Sort of) Reference:https://stackoverflow.com/a/1348624 
 		cout << endl;
@@ -119,71 +126,75 @@ int main()
 
 void printState(int xPosition, int yPosition)
 {
-	
-	//Loads game area 
-	for (int i = 0; i < HEIGHT;  i++)
+	if (!playerIsDead)
 	{
-		for (int n = 0; n < WIDTH;  n++) 
+		for (int i = 0; i < HEIGHT; i++)
 		{
-			
-			if (n == xPosition && i == yPosition) //Places down Player coordinates
+			for (int n = 0; n < WIDTH; n++)
 			{
-				cout << '@';
-				//Is the player standing on top of an enemy or ingredient
-				if (UnitLocations[i][n] != nullptr)
-				{
-					playerIsDead = UnitLocations[i][n]->getUnit();
 
-					///As the unit class is deleted this will be null
-					UnitLocations[i][n] = nullptr;
-				}
-			}
-			else if (UnitLocations[i][n] != nullptr)
-			{
-				char symbolInSpace = UnitLocations[i][n]->GetSymbolInLocation();
-				if (symbolInSpace != ' ')
+				if (n == xPosition && i == yPosition) //Places down Player coordinates
 				{
-					cout << symbolInSpace;
+					cout << '@';
+					//Is the player standing on top of an enemy or ingredient
+					if (UnitLocations[i][n] != nullptr)
+					{
+						playerIsDead = UnitLocations[i][n]->getUnit();
+
+						///As the unit class is deleted this will be null
+						UnitLocations[i][n] = nullptr;
+					}
 				}
-			}
-			else
-			{
-				int ranNum = generateRandomNumber();
-				switch (ranNum)
+				else if (UnitLocations[i][n] != nullptr)
 				{
-					case 0: 
+					char symbolInSpace = UnitLocations[i][n]->GetSymbolInLocation();
+					if (symbolInSpace != ' ')
+					{
+						cout << symbolInSpace;
+					}
+				}
+				else
+				{
+					int ranNum = generateRandomNumber();
+					switch (ranNum)
+					{
+					case 0:
 						cout << '.';
 						break;
-					case 1: 
+					case 1:
 						//Spawns ingredient
-						{
-							ingredient* newIngredient = ingredient::outPutRandomIngredient(engine);
-							
-							Unit* newIngredientUnit = new Unit(newIngredient);
-							UnitLocations[i][n] = newIngredientUnit;
-							cout << newIngredient->getSymbol();
-						}
-						break;
+					{
+						ingredient* newIngredient = ingredient::outPutRandomIngredient(Random::engine);
+
+						Unit* newIngredientUnit = new Unit(newIngredient);
+						UnitLocations[i][n] = newIngredientUnit;
+						cout << newIngredient->getSymbol();
+					}
+					break;
 					case 2:
-						{
-							character* newEnemy = new character("Enemy", true);
-							Unit* newEnemyUnit = new Unit(newEnemy); //This doesn't seem to work with nullptr being present
-							UnitLocations[i][n] = newEnemyUnit;
-							cout << newEnemy->getSymbol();
-						}
-						break;
+					{
+						character* newEnemy = new character("Enemy", true);
+						Unit* newEnemyUnit = new Unit(newEnemy);
+						UnitLocations[i][n] = newEnemyUnit;
+						cout << newEnemy->getSymbol();
+					}
+					break;
 					default:
 						cout << "Invalid answer" << endl;
 						break;
+					}
 				}
+
 			}
-		
+			cout << "	" << Help[i] << endl;
+
 		}
-		cout << "	" << Help[i] << endl;
-	}
-	for (int i = HEIGHT; i < sizeof(Help) / 40 ; i++)
-	{
-		cout << "		" << Help[i] << endl;
+		//Loads game area 
+
+		for (int i = HEIGHT; i < sizeof(Help) / 40; i++)
+		{
+			cout << "		" << Help[i] << endl;
+		}
 	}
 }
 
@@ -194,11 +205,11 @@ void printState(int xPosition, int yPosition)
 /// 1:Ingredient
 /// 2:Enemy
 /// </summary>
+
 int generateRandomNumber()
 {
-	
 	std::uniform_int_distribution<int> Randomint(0, 100);
-	int RandomIntResult = Randomint(engine);
+	int RandomIntResult = Randomint(Random::engine);
 
 	if (RandomIntResult < 2) // 2% chance
 	{
