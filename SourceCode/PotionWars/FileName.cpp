@@ -10,6 +10,7 @@
 #include "Character.h"
 #include "Position.h"
 #include "Random.h"
+#include "thread"
 #define HEIGHT  6
 #define WIDTH 8
 
@@ -24,6 +25,7 @@ void printState(int xPosition, int yPosition);
 int generateRandomNumber();
 vector<ingredient*> ingredient::ingredientsInGame;
 std::default_random_engine Random::engine;
+void changeEnemyLocation();
 #pragma region Instructions array
 string Help[9] =
 {
@@ -46,22 +48,26 @@ vector<character>* character::AliveEnemies;
 /// <summary>
 /// Stores positions for where things are located across the board
 /// </summary>
-vector<vector<Unit*>> UnitLocations(HEIGHT,vector<Unit*>(WIDTH,nullptr));
+vector<vector<Unit*>> UnitLocations(HEIGHT,vector<Unit*>(WIDTH,nullptr)); //<-- First is the y array and the second is the X array
 bool playerIsDead;
-int main()
+
+/// <summary>
+/// Start of Program
+/// </summary>
+character* start()
 {
 	generateRandomNumber();
 	//Creates new ingrdients
 	//BrainRot Potion
-	ingredient* brain = new ingredient("Brain",'B');
-	ingredient* appleJuice = new ingredient("AppleJuice",'A');
+	ingredient* brain = new ingredient("Brain", 'B');
+	ingredient* appleJuice = new ingredient("AppleJuice", 'A');
 	//FirePotion
-	ingredient* wood = new ingredient("Wood",'W');
-	ingredient* magma = new ingredient("Magma",'M');
-	
+	ingredient* wood = new ingredient("Wood", 'W');
+	ingredient* magma = new ingredient("Magma", 'M');
+
 	//PaperBall 
-	ingredient* paper = new ingredient("Paper",'P');
-	
+	ingredient* paper = new ingredient("Paper", 'P');
+
 	//Creates a brainRot potionType with ingredients
 	potionType* brainRot = new potionType("BrainRot");
 	brainRot->addIngredient(brain);
@@ -81,7 +87,13 @@ int main()
 	character* player = new character(playerName, false);
 	player->setPosX(+6);
 	player->setPosY(+3);
-	
+
+	return player;
+
+}
+int main()
+{
+	character* player = start();
 	///Main loop
 	do
 	{
@@ -128,11 +140,13 @@ void printState(int xPosition, int yPosition)
 {
 	if (!playerIsDead)
 	{
+		///Creates thread to change enemy location 
+		//std::thread t1(changeEnemyLocation);
 		for (int i = 0; i < HEIGHT; i++)
 		{
 			for (int n = 0; n < WIDTH; n++)
 			{
-
+			//	t1.join(); //Not working yet
 				if (n == xPosition && i == yPosition) //Places down Player coordinates
 				{
 					cout << '@';
@@ -176,6 +190,8 @@ void printState(int xPosition, int yPosition)
 						character* newEnemy = new character("Enemy", true);
 						Unit* newEnemyUnit = new Unit(newEnemy);
 						UnitLocations[i][n] = newEnemyUnit;
+						newEnemy->setPosX(+n);
+						newEnemy->setPosY(+i);
 						cout << newEnemy->getSymbol();
 					}
 					break;
@@ -225,4 +241,58 @@ int generateRandomNumber()
 	}
 	
 	
+}
+
+void changeEnemyLocation()
+{
+	//Loops through all the enemies
+	for (int i = 0; i < HEIGHT; i++)
+	{
+		for (int n = 0; n < WIDTH; n++)
+		{
+			if (UnitLocations[i][n] != nullptr)
+			{
+				char symbolInSpace = UnitLocations[i][n]->GetSymbolInLocation();
+				if (symbolInSpace == '&') // <-- If an enemy
+				{
+					character* enemy = UnitLocations[i][n]->getEnemy();
+
+					if (enemy->getIsMoved())
+					{
+						///Random Number generation
+						std::uniform_int_distribution<int> RandomInt(-1, 1);
+						int RandomPos = RandomInt(Random::engine);
+						std::uniform_int_distribution<int> RandomInt2(1, 2); //<-- It'll be in x if 1 or y if 2
+						int RandomCoordinate = RandomInt2(Random::engine);
+
+						//Calculates a new position to move
+						enemy->setIsMoved(true);
+						position* newPos = new position(RandomPos * RandomCoordinate % 2, RandomPos * 1 % RandomCoordinate);
+						//cout << newPos->getPosX() << newPos->getPosY() << endl;
+						//
+
+						//Moves enemy
+						enemy->setPosX(newPos->getPosX());
+						enemy->setPosY(newPos->getPosY());
+
+						//Deletes value 
+						delete newPos;
+
+						//return newPos;
+						UnitLocations[enemy->getPosY()][enemy->getPosX()] = UnitLocations[i][n]; //Sets new enemy position
+						UnitLocations[i][n] = nullptr; // <-- Removes enemy in that old spot
+
+
+					}
+					else
+					{
+						enemy->setIsMoved(false);
+					}
+				}
+			}
+			
+
+		}
+
+	}
 }

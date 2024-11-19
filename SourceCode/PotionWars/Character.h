@@ -70,12 +70,15 @@ public:
 		{
 			std::uniform_int_distribution<int> RandomInt(-1, 1);
 			int RandomPos = RandomInt(Random::engine);
-			std::uniform_int_distribution<int> RandomInt(1, 2); //<-- It'll be in x if 1 or y if 2
-			int RandomCoordinate = RandomInt(Random::engine);
+			std::uniform_int_distribution<int> RandomInt2(1, 2); //<-- It'll be in x if 1 or y if 2
+			int RandomCoordinate = RandomInt2(Random::engine);
 
 			hasMoved = true;
 			position* newPos = new position(RandomPos * RandomCoordinate%2, RandomPos * 1%RandomCoordinate);
-			cout << newPos << endl;
+			cout << newPos->getPosX() << newPos->getPosY() << endl;
+			
+			setPosX(newPos->getPosX());
+			setPosY(newPos->getPosY());
 			//return newPos;
 		}
 	}
@@ -83,9 +86,9 @@ public:
 	{
 		return hasMoved;
 	}
-	void setIsMoved()
+	void setIsMoved(bool ans)
 	{
-
+		hasMoved = ans;
 	}
 #pragma endregion
 };

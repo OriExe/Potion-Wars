@@ -21,7 +21,6 @@ public:
 	}
 	/// <summary>
 	/// Returns the unit that is stored in that space
-	/// SHOULD ONLY BE CALLED ONCE PER LOOP
 	/// </summary>
 	/// <returns>The symbol of the object in that space or a blank space</returns>
 	char GetSymbolInLocation()
@@ -34,17 +33,14 @@ public:
 		//If Enemy
 		else if (enemyPosition != nullptr)
 		{
-			if (!enemyPosition->getIsMoved()) //< - Checks if enemy has moved 
-			{
-				enemyPosition->enemyMovement();
-				return '.';
-			}
-			else
-			{
-				return enemyPosition->getSymbol();
-			}
-			//Tells the enemy to move position through a function
-			//Actually I need to do this differently
+			//if (!enemyPosition->getIsMoved()) //< - Checks if enemy has moved 
+			//{
+			//	enemyPosition->enemyMovement();
+			//	return '.';
+			//}
+			
+			return enemyPosition->getSymbol(); // <- Sends enemy
+			
 		}
 		else
 		{
@@ -70,7 +66,16 @@ public:
 		}
 		//And then also delete this unit and replace it with nullptr in the array. 
 		delete this;
-
+	}
+	/// <summary>
+	/// Should only run is enemy is this unit
+	/// </summary>
+	character* getEnemy()
+	{
+		if (enemyPosition != nullptr)
+		{
+			return enemyPosition;
+		}
 	}
 };
 
